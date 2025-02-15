@@ -1,6 +1,6 @@
 # grpo-flat with zero dataset
 
-基于0.5b模型，低资源0样本grpo训练，单卡训练15分钟得到一个夸夸机器人
+基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟得到一个夸夸机器人
 
 ## model
 
@@ -27,9 +27,9 @@ grpo-flat/
 - chinese_char_ratio_reward  # Control the ratio of Chinese characters
 
 ## Device
-4090 * 1  # 用于训练policy model
+4090 * 1  # for policy model training
 
-2070s * 1  # 架设Qwen2.5-7B-int8
+2070s * 1  # for Qwen2.5-7B-int8 llm rater
 
 ## 0样本训练一个夸夸机器人
 ```
@@ -52,25 +52,29 @@ prompt = "你需要对一个夸夸机器人的回复进行打分，分值范围1
 # Deploy your llm rater model on idle device (2070s in my case)
 docker run -d --gpus=all -e CUDA_VISIBLE_DEVICES=1 -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 
-# execute your llm rater model (qwen2.5:7b in my case)
+# Execute your llm rater model (qwen2.5:7b in my case)
 docker exec -it ollama ollama run qwen2.5:7b
 
-# train policy model
+# train policy model with one gpu
 CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py
 ```
+[[training log]](https://drive.google.com/file/d/1Lv8gGAUBP-YaPcYM4FiVqAPFWoT3BNBn/view?usp=sharing)
 
-## wandb
+## wandb log
 ### reward curve
 ![wandblog](./assets/reward.png)
 ### training curve
 ![wandblog](./assets/train.png)
 
-## chat with your model
+[wandb report](https://wandb.ai/freejack7878-individual/grpo_training/reports/grpo-flat--VmlldzoxMTM2NjcyMw)
+
+
+## Chat with your tuned model
 ```
-# serve your model
+# Serve your model
 python serve_chat_model.py
 
-# chat with your model
+# Chat with your model
 python chat_with_model.py
 ```
 
