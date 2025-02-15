@@ -15,8 +15,8 @@
 grpo-flat/
 ├── grpo.py            # GRPO main program
 ├── grpo_trainer.py    # Flat implementation of GRPO trainer
-└── reward_funcs.py   # GRPO reward function library
-└── serve_chat_model.py    # serve your chat model
+├── reward_funcs.py   # GRPO reward function library
+├── serve_chat_model.py    # serve your chat model
 └── chat_with_model.py    # quick test your chat model in console
 ```
 
