@@ -105,9 +105,6 @@ class ChatMessageSchema(Schema):
 
 
 class CreateChatCompletionSchema(Schema):
-    class Meta:
-        unknown = EXCLUDE  # 忽略未知的字段
-
     model = fields.Str(required=True, metadata={"example": "qwen"})
     messages = fields.List(
         fields.Nested(ChatMessageSchema), required=True,
