@@ -13,7 +13,8 @@ from marshmallow import validate, Schema, fields, EXCLUDE
 
 warnings.filterwarnings('ignore', category=UserWarning)
 
-# ------------------------------------------------------------------------------------------------------------------
+
+# global args
 DEVICE_NAME = "cuda:1" if torch.cuda.is_available() else "cpu"
 DEVICE = torch.device(DEVICE_NAME)
 # MODEL_PATH = "checkpoints/grpo_training_20250215_092214/step_280_20250215_093259"  # your checkpoint path
@@ -22,9 +23,9 @@ TOKENIZE_PATH = MODEL_PATH
 max_new_tokens = 1024
 temperature = 0.7
 top_k = 16
-# ------------------------------------------------------------------------------------------------------------------
 
-class Transformers():
+
+class AppModel:
     def __init__(self):
         pass
 
@@ -66,7 +67,7 @@ class Transformers():
         return answer
 
 
-tfs = Transformers()
+app_model = AppModel()
 
 chat_bp = Blueprint('Chat', __name__, url_prefix='/v1/chat')
 completions_bp = Blueprint('Completions', __name__, url_prefix='/v1/completions')
@@ -93,7 +94,7 @@ def create_app():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_PATH, trust_remote_code=True).to(DEVICE)
 
-    tfs.init_app(tokenizer, model)
+    app_model.init_app(tokenizer, model)
 
     return app
 
@@ -149,7 +150,7 @@ class ChatCompletionSchema(Schema):
 def create_chat_completion():
     create_chat_completion = CreateChatCompletionSchema().load(request.json)
 
-    response = tfs.chat_no_stream(tfs.tokenizer, create_chat_completion["messages"])
+    response = app_model.chat_no_stream(app_model.tokenizer, create_chat_completion["messages"])
 
     message = ChatMessageSchema().dump(
         {"role": "assistant", "content": response})
