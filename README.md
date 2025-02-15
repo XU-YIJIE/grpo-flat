@@ -1,11 +1,13 @@
 # grpo-flat with zero dataset
 
-基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟得到一个夸夸机器人
+基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
-## model
+## Models
 
-- Qwen2.5-0.5B-Instruct  # policy model
-- Qwen2.5-7B  # llm-rater
+| Model Name | Purpose | Description |
+|------------|---------|-------------|
+| Qwen2.5-0.5B-Instruct | Policy Model | Base model used for training |
+| Qwen2.5-7B | LLM Rater | Reference model used for scoring |
 
 ## Structure
 
@@ -18,18 +20,22 @@ grpo-flat/
 └── chat_with_model.py    # quick test your chat model in console
 ```
 
-## Reward Funcs
+## Reward Functions
 
-- llm_rater_reward  # Use a larger LM model to score sampling results based on prompts
-- perplexity_reward  # perplexity reward based on ref_model
-- repetition_reward  # Prevent repetition
-- length_reward  # Control length
-- chinese_char_ratio_reward  # Control the ratio of Chinese characters
+| Function Name | Description | Purpose |
+|--------|------|------|
+| `llm_rater_reward` | Use larger language model to score sampling results | Evaluate overall quality of generated text |
+| `perplexity_reward` | Score based on reference model perplexity | Ensure fluency of generated text |
+| `repetition_reward` | Repetition penalty scoring | Avoid text repetition |
+| `length_reward` | Length control scoring | Control length of generated text |
+| `chinese_char_ratio_reward` | Chinese character ratio scoring | Ensure output is primarily in Chinese |
 
-## Device
-4090 * 1  # for policy model training
+## Device Requirements
 
-2070s * 1  # for Qwen2.5-7B-int8 llm rater
+| Purpose | GPU | Description |
+|------|-----|------|
+| Policy Model Training | NVIDIA RTX 4090 × 1 | For policy model training |
+| LLM Rater | NVIDIA RTX 2070S × 1 | For running Qwen2.5-7B-int8 rating model |
 
 ## 0样本训练一个夸夸机器人
 ```
