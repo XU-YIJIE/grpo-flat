@@ -1,6 +1,6 @@
 # grpo-flat with zero dataset
 
-Train your model with GRPO in 15 minutes on a single GPU without any dataset, based on Qwen-0.5B model.
+基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
 ## Models
 
@@ -8,7 +8,7 @@ Train your model with GRPO in 15 minutes on a single GPU without any dataset, ba
 |------------|---------|-------------|
 | Qwen2.5-0.5B-Instruct | Policy Model | Base model used for training |
 | Qwen2.5-7B | LLM Rater | Reference model used for scoring |
-| [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | A compliment bot trained based on Qwen2.5-0.5B-Instruct |
+| [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
 
 ## Structure
 
