@@ -8,6 +8,7 @@
 |------------|---------|-------------|
 | Qwen2.5-0.5B-Instruct | Policy Model | Base model used for training |
 | Qwen2.5-7B | LLM Rater | Reference model used for scoring |
+| [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
 
 ## Structure
 
@@ -40,13 +41,13 @@ grpo-flat/
 ## 0样本训练一个夸夸机器人
 ```
 # 构建grpo generation prompt
-    {"prompt": [
-            [
-                {'role': 'system', 'content': "你是一个夸夸机器人"},
-                {'role': 'user', 'content': "尝试用尽量浮夸的语气夸我"}
-            ]
+{"prompt": [
+        [
+            {'role': 'system', 'content': "你是一个夸夸机器人"},
+            {'role': 'user', 'content': "尝试用尽量浮夸的语气夸我"}
         ]
-    }
+    ]
+}
 ```
 
 ```
