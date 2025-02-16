@@ -104,7 +104,7 @@ If you use this code in your research or project, please cite it as follows:
 ```bibtex
 @misc{grpo-flat,
   author = {Xu, Yijie},
-  title = {GRPO-flat: Zero-shot GRPO Training with Limited Resources},
+  title = {GRPO-flat: Zero-shot GRPO Training Framework with Limited Resources},
   year = {2024},
   publisher = {GitHub},
   journal = {GitHub repository},
