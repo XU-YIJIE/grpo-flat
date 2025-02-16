@@ -70,7 +70,7 @@ def get_demo_data():
 
 
 def main():
-    def save_manager(current_epoch, current_steps, current_avg_reward, max_save=None, prefix=None):
+    def save_manager(current_epoch, current_steps, current_avg_reward, max_save=None, prefix=None, push_to_hub=False, repo_id=None):
         checkpoints_dir = f"checkpoints/{wandb_run_name}"
         if not os.path.exists(checkpoints_dir):
             os.makedirs(checkpoints_dir)
@@ -99,7 +99,15 @@ def main():
             'reward': current_avg_reward,
             'epoch': current_epoch,
         }
-        torch.save(training_state, os.path.join(save_dir, "training_state.pt"))        
+        torch.save(training_state, os.path.join(save_dir, "training_state.pt"))
+        
+        if push_to_hub and repo_id:
+            try:
+                unwrapped_model.push_to_hub(repo_id, commit_message=f"Step {current_steps} with reward {current_avg_reward:.4f}")
+                tokenizer.push_to_hub(repo_id, commit_message=f"Step {current_steps} with reward {current_avg_reward:.4f}")
+                logger.info(f"Successfully pushed model to hub: {repo_id}")
+            except Exception as e:
+                logger.error(f"Failed to push to hub: {e}")
         
         
     model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"  # 使用Qwen2.5-0.5B-Instruct作为基础模型
@@ -137,9 +145,7 @@ def main():
     )
     
     # accelerator init
-    accelerator = Accelerator(
-        gradient_accumulation_steps=config.gradient_accumulation_steps,
-    )
+    accelerator = Accelerator(gradient_accumulation_steps=config.gradient_accumulation_steps)
     
     # wandb init
     if accelerator.is_main_process:

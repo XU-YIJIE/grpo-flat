@@ -9,7 +9,7 @@ from typing import List
 from flask import Flask, request, Blueprint
 from flask_cors import CORS
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from marshmallow import validate, Schema, fields, EXCLUDE
+from marshmallow import validate, Schema, fields
 
 warnings.filterwarnings('ignore', category=UserWarning)
 
@@ -22,7 +22,9 @@ MODEL_PATH = "lm_models/Qwen2.5-0.5B-Instruct"
 TOKENIZE_PATH = MODEL_PATH
 max_new_tokens = 1024
 temperature = 0.7
+top_p = 0.9
 top_k = 16
+repetition_penalty = 1.1
 
 
 class AppModel:
