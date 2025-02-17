@@ -57,7 +57,7 @@ prompt = "你需要对一个夸夸机器人的回复进行打分，分值范围1
 
 ```
 # Deploy your llm rater model on idle device (2070s in my case)
-docker run -d --gpus=all -e CUDA_VISIBLE_DEVICES=1 -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker run -d --gpus 'device=1' -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 
 # Execute your llm rater model (qwen2.5:7b in my case)
 docker exec -it ollama ollama run qwen2.5:7b
