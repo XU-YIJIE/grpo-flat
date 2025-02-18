@@ -2,9 +2,11 @@
 
 基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
-[2024/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
 
-[2024/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
+## News
+[2025/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
+
+[2025/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
 
 ## Models
 
