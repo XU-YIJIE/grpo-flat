@@ -1,14 +1,14 @@
-# grpo-flat with zero dataset
+# 🚀 grpo-flat with zero dataset
 
 基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
 
-## News
+## 📢 News
 [2025/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
 
 [2025/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
 
-## Models
+## 🤖 Models
 
 | Model Name | Purpose | Description |
 |------------|---------|-------------|
@@ -16,7 +16,7 @@
 | Qwen2.5-7B | LLM Rater | Reference model used for scoring |
 | [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
 
-## Structure
+## 🏗️ Structure
 
 ```
 grpo-flat/
@@ -27,7 +27,7 @@ grpo-flat/
 └── chat_with_model.py    # quick test your chat model in console
 ```
 
-## Reward Functions
+## 🎯 Reward Functions
 
 | Function Name | Description | Purpose |
 |--------|------|------|
@@ -37,14 +37,14 @@ grpo-flat/
 | `length_reward` | Length control scoring | Control length of generated text |
 | `chinese_char_ratio_reward` | Chinese character ratio scoring | Ensure output is primarily in Chinese |
 
-## Device Requirements
+## 💻 Device Requirements
 
 | Purpose | GPU | Description |
 |------|-----|------|
 | Policy Model Training | NVIDIA RTX 4090 × 1 | For policy model training |
 | LLM Rater | NVIDIA RTX 2070S × 1 | For running Qwen2.5-7B-int8 rating model |
 
-## 0样本训练一个夸夸机器人
+## 🌟 0样本训练一个夸夸机器人
 ```
 # 构建grpo generation prompt
 {"prompt": [
@@ -128,7 +128,7 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
 ```
 [[training log]](https://drive.google.com/file/d/1Lv8gGAUBP-YaPcYM4FiVqAPFWoT3BNBn/view?usp=sharing)
 
-## wandb log
+## 📊 wandb log
 ### reward curve
 ![wandblog](./assets/reward.png)
 ### training curve
@@ -137,7 +137,7 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
 [wandb report](https://wandb.ai/freejack7878-individual/grpo_training/reports/grpo-flat--VmlldzoxMTM2NjcyMw)
 
 
-## Chat with your tuned model
+## 💬 Chat with your tuned model
 ```
 # Serve your model
 python serve_chat_model.py
@@ -146,7 +146,7 @@ python serve_chat_model.py
 python chat_with_model.py
 ```
 
-## Demo
+## 🎮 Demo
 
 with qwen2.5-0.5b-instruct
 
@@ -158,7 +158,7 @@ with 夸夸模型
 ![kuakua](./assets/kuakua.png)
 ![kuakua](./assets/kuakua2.png)
 
-## Citation
+## 📝 Citation
 
 If you use this code in your research or project, please cite it as follows:
 
