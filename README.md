@@ -2,6 +2,10 @@
 
 基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
+[2024/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
+
+[2024/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
+
 ## Models
 
 | Model Name | Purpose | Description |
@@ -62,8 +66,49 @@ docker run -d --gpus 'device=1' -v ollama:/root/.ollama -p 11434:11434 --name ol
 # Execute your llm rater model (qwen2.5:7b in my case)
 docker exec -it ollama ollama run qwen2.5:7b
 
-# train policy model with one gpu
-CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py
+# train policy model with one gpu with 8bit quantization and lora
+CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
+    --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
+    --num_epochs 300 \
+    --batch_size 2 \
+    --learning_rate 1e-6 \
+    --gradient_accumulation_steps 1 \
+    --log_steps 1 \
+    --save_steps 10 \
+    --max_grad_norm 1 \
+    --max_save 3 \
+    --group_num 8 \
+    --mini_batch_size 1 \
+    --wandb_project "grpo_training" \
+    --use_peft True \
+    --lora_rank 16 \
+    --lora_alpha 16 \
+    --lora_dropout 0.1 \
+    --use_8bit True \
+    --target_modules "q_proj,v_proj,lm_head"
+
+# train policy model with one gpu with qlora
+CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
+    --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
+    --num_epochs 300 \
+    --batch_size 2 \
+    --learning_rate 1e-6 \
+    --gradient_accumulation_steps 1 \
+    --log_steps 1 \
+    --save_steps 10 \
+    --max_grad_norm 1 \
+    --max_save 3 \
+    --group_num 8 \
+    --mini_batch_size 1 \
+    --wandb_project "grpo_training" \
+    --use_peft True \
+    --lora_rank 16 \
+    --lora_alpha 16 \
+    --lora_dropout 0.1 \
+    --use_4bit True \
+    --qlora True \
+    --target_modules "q_proj,v_proj,lm_head"
+
 ```
 [[training log]](https://drive.google.com/file/d/1Lv8gGAUBP-YaPcYM4FiVqAPFWoT3BNBn/view?usp=sharing)
 
