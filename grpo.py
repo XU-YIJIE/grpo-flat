@@ -11,7 +11,8 @@ from reward_funcs import (
     perplexity_reward,
     repetition_reward,
     length_reward,
-    chinese_char_ratio_reward
+    chinese_char_ratio_reward,
+    llm_rater_reward
 )
 import os
 from loguru import logger
@@ -180,6 +181,7 @@ class Trainer:
         # Quantization config
         quantization_config = None
         if self.use_4bit and self.use_8bit:
+            print(self.use_4bit, self.use_8bit)
             raise ValueError("Error, use_4bit and use_8bit cannot be set at the same time")
         elif self.use_8bit or self.use_4bit:
             logger.info(f"Quantizing model, use_4bit: {self.use_4bit}, use_8bit: {self.use_8bit}")
@@ -353,10 +355,11 @@ class Trainer:
         perplexity_reward_func = partial(perplexity_reward, model=self.ref_model, tokenizer=self.tokenizer)
         perplexity_reward_func.__name__ = "perplexity_reward"
         reward_funcs = [
-            perplexity_reward_func,
-            repetition_reward,
-            length_reward,
-            # chinese_char_ratio_reward
+            perplexity_reward_func, 
+            llm_rater_reward, 
+            repetition_reward, 
+            length_reward, 
+            chinese_char_ratio_reward
         ]
         
         max_train_steps = self.num_epochs * len(self.train_dataloader)
@@ -485,29 +488,29 @@ class Trainer:
 if __name__ == "__main__":
     args = parse_args()
     
-    # Override some arguments for GRPO training
-    args.model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"
-    args.learning_rate = 1e-6
-    args.batch_size = 2
-    args.gradient_accumulation_steps = 1
-    args.num_epochs = 300
-    args.log_steps = 1
-    args.save_steps = 10
-    args.max_grad_norm = 1
-    args.max_save = 3
-    args.wandb_project = "grpo_training"
+    # # Override some arguments for GRPO training
+    # args.model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"
+    # args.learning_rate = 1e-6
+    # args.batch_size = 2
+    # args.gradient_accumulation_steps = 1
+    # args.num_epochs = 300
+    # args.log_steps = 1
+    # args.save_steps = 10
+    # args.max_grad_norm = 1
+    # args.max_save = 3
+    # args.wandb_project = "grpo_training"
     
-    args.group_num = 8
-    args.mini_batch_size = 1
+    # args.group_num = 8
+    # args.mini_batch_size = 1
     
-    args.use_peft = True
-    args.lora_rank = 16
-    args.lora_alpha = 16
-    args.lora_dropout = 0.1
-    args.use_8bit = True
-    # args.use_4bit = True
-    # args.qlora = True
-    args.target_modules = "q_proj,v_proj,lm_head"
+    # args.use_peft = True
+    # args.lora_rank = 16
+    # args.lora_alpha = 16
+    # args.lora_dropout = 0.1
+    # args.use_8bit = True
+    # # args.use_4bit = True
+    # # args.qlora = True
+    # args.target_modules = "q_proj,v_proj,lm_head"
     
     trainer = Trainer(args)
     trainer.train()
