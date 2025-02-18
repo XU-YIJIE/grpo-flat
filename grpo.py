@@ -4,7 +4,7 @@ from transformers import (
     AutoModelForCausalLM,
     get_linear_schedule_with_warmup,
     PreTrainedTokenizer,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
 )
 from grpo_trainer import GRPOTrainer, GRPOConfig
 from reward_funcs import (
@@ -16,7 +16,7 @@ from reward_funcs import (
 )
 import os
 from loguru import logger
-from accelerate import Accelerator
+from accelerate import Accelerator, DistributedDataParallelKwargs
 import numpy as np
 from torch.utils.data import DataLoader
 from functools import partial
@@ -147,7 +147,10 @@ class Trainer:
             max_grad_norm=self.max_grad_norm,
         )
         
-        self.accelerator = Accelerator(gradient_accumulation_steps=self.gradient_accumulation_steps)
+        self.accelerator = Accelerator(
+            gradient_accumulation_steps=self.gradient_accumulation_steps,
+            kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)]
+        )
         self.initializer()
         
         if self.accelerator.is_main_process:
