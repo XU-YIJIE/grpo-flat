@@ -41,9 +41,9 @@ logger.add(
     filter=lambda record: record["level"].name in ["INFO", "ERROR"]
 )
 
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-os.environ["NCCL_P2P_DISABLE"] = "1"
-os.environ["NCCL_IB_DISABLE"] = "1"
+# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+# os.environ["NCCL_P2P_DISABLE"] = "1"
+# os.environ["NCCL_IB_DISABLE"] = "1"
 
 def preprocess_rl_dataset_v1(
     examples: Dict[str, List[Any]], 
