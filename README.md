@@ -44,6 +44,26 @@ grpo-flat/
 | Policy Model Training | NVIDIA RTX 4090 × 1 | For policy model training |
 | LLM Rater | NVIDIA RTX 2070S × 1 | For running Qwen2.5-7B-int8 rating model |
 
+## 🛠️ Environment Setup
+
+### Setup with requirements.txt
+```bash
+git clone https://github.com/xyj787890/grpo-flat.git
+conda create -n grpo-flat python=3.10
+pip install -r requirements.txt
+```
+
+### Or setup with ngc container (to avoid any environment issues)
+```bash
+docker pull nvcr.io/nvidia/pytorch:24.01-py3
+
+docker run -itd --name ngc_pytorch_2401 -v /[your_local_workspace]/:/home/workspace  --workdir /home/workspace -u 1000:1000 -p 6000:22 -p 6001:9001 -p 6002:9002 -p 6003:9003 --gpus all --privileged --ipc=host [your_ngc_image_id] bash
+
+docker exec -it ngc_pytorch_2401 bash
+
+# and enjoy
+```
+
 ## 🌟 0样本训练一个夸夸机器人
 ```
 # 构建grpo generation prompt
@@ -188,7 +208,7 @@ If you use this code in your research or project, please cite it as follows:
 @misc{grpo-flat,
   author = {Xu, Yijie},
   title = {GRPO-flat: Zero-shot GRPO Training Framework with Limited Resources},
-  year = {2025},
+  year = {2024},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/xyj787890/grpo-flat}},
