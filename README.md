@@ -66,7 +66,7 @@ docker exec -it ngc_pytorch_2401 bash
 
 ## 🌟 0样本训练一个夸夸机器人
 ```
-# 构建grpo generation prompt
+# design your grpo generation prompt
 {"prompt": [
         [
             {'role': 'system', 'content': "你是一个夸夸机器人"},
