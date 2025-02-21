@@ -139,7 +139,10 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
     --group_num 8 \
     --mini_batch_size 1 \
     --wandb_project "grpo_training"
+```
 
+#### lora/qlora with 8bit/4bit quantization
+```
 # train policy model with one gpu with 8bit quantization and lora
 CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
     --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
