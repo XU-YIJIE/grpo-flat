@@ -7,7 +7,7 @@ import jieba
 from collections import Counter
 import torch
 import numpy as np
-
+import os
 def reward_punish_too_long(completions, punish_length=100, **kwargs):
     '''
     Reward function that gives higher scores to completions that are close to 20 tokens.

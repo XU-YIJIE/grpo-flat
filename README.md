@@ -4,6 +4,8 @@
 
 
 ## 📢 News
+[2025/02/21]  Split policy_model ref_model, serve your ref_model separately
+
 [2025/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
 
 [2025/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
@@ -23,6 +25,7 @@ grpo-flat/
 ├── grpo.py            # GRPO main program
 ├── grpo_trainer.py    # Flat implementation of GRPO trainer
 ├── reward_funcs.py    # GRPO reward function library
+├── ref_fastapi.py    # serve your reference model
 ├── serve_chat_model.py    # serve your chat model
 └── chat_with_model.py    # quick test your chat model in console
 ```
@@ -81,12 +84,46 @@ docker exec -it ngc_pytorch_2401 bash
 prompt = "你需要对一个夸夸机器人的回复进行打分，分值范围1-10分，越浮夸的回复分数越高。对不通顺的内容直接打0分。仅输出分数数字即可，不要输出任何其他内容。\n输入文本：{}，分数："
 ```
 
+#### Deploy your llm rater model
 ```
 # Deploy your llm rater model on idle device (2070s in my case)
 docker run -d --gpus 'device=1' -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 
 # Execute your llm rater model (qwen2.5:7b in my case)
 docker exec -it ollama ollama run qwen2.5:7b
+```
+
+#### Quick start with grpo_vanilla.py
+```
+CUDA_VISIBLE_DEVICES=0 accelerate launch grpo_vanilla.py
+```
+
+#### Split policy_model ref_model, serve your ref_model separately
+```
+CUDA_VISIBLE_DEVICES=1 python ref_fastapi.py \
+    --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
+    --max_parallel_requests 2 \
+    --max_wait_time 0.1
+```
+
+#### Full parameters with grpo.py
+```
+# train policy model with one gpu and full parameters, with policy_model ref_model splitted
+CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
+    --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
+    --num_epochs 300 \
+    --batch_size 2 \
+    --learning_rate 1e-6 \
+    --gradient_accumulation_steps 1 \
+    --log_steps 1 \
+    --save_steps 10 \
+    --max_grad_norm 1 \
+    --max_save 3 \
+    --group_num 8 \
+    --mini_batch_size 1 \
+    --wandb_project "grpo_training" \
+    --ref_model_url "http://localhost:8000/predict" \
+    --ref_from_remote true
 
 # train policy model with one gpu and full parameters
 CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \

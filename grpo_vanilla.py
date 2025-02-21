@@ -1,3 +1,4 @@
+import argparse
 from ast import List
 import shutil
 from pyparsing import Any
@@ -6,7 +7,9 @@ from transformers import (AutoTokenizer,
                           AutoModelForCausalLM,
                           get_linear_schedule_with_warmup,
                           PreTrainedTokenizer)
-from grpo_trainer import GRPOTrainer, GRPOConfig
+from arguments import parse_args
+from grpo_trainer import GRPOTrainer
+from tmp.grpo_config import GRPOConfig
 from reward_funcs import (reward_punish_too_long, 
                           reward_unbias, 
                           llm_rater_reward, 
@@ -108,44 +111,38 @@ def main():
                 logger.info(f"Successfully pushed model to hub: {repo_id}")
             except Exception as e:
                 logger.error(f"Failed to push to hub: {e}")
-        
+    
+    args = parse_args()
+    args.group_num = 8
+    args.mini_batch_size = 1
+    args.beta = 0.01
+    args.cliprange = 0.2
+    args.max_grad_norm = 1
+    # args.ref_model_url = "http://localhost:8000/predict"
+    # args.ref_from_remote = True
         
     model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"  # 使用Qwen2.5-0.5B-Instruct作为基础模型
     dataset_dir = "dataset/tldr"
-    
     learning_rate = 1e-6
-    group_num = 8
-    mini_batch_size = 1
     batch_size = 4  # 每个global_steps更新 batch_size / mini_batch_size 次
     gradient_accumulation_steps = 1
     # 每 gradient_accumulation_steps / (batch_size / mini_batch_size) 个global_steps反向传播一次
+    
     num_epochs = 300
     log_steps = 1
     save_steps = 10
-
-    max_grad_norm = 1
     seed = 1024
     max_save = 3
-    
     resume = False
     
+    torch.manual_seed(seed)
     # wandb
     wandb_project = "grpo_training"
     wandb_run_name = f"{wandb_project.split('/')[-1]}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     wandb_dir = f"./wandb/{wandb_run_name}"
     
-    # config
-    config = GRPOConfig(
-        learning_rate=learning_rate,
-        group_num=group_num,  # 每个输入采样group_num个候选回复
-        mini_batch_size=mini_batch_size,
-        gradient_accumulation_steps=gradient_accumulation_steps,
-        max_grad_norm=max_grad_norm,
-        seed=seed
-    )
-    
     # accelerator init
-    accelerator = Accelerator(gradient_accumulation_steps=config.gradient_accumulation_steps)
+    accelerator = Accelerator(gradient_accumulation_steps=gradient_accumulation_steps)
     
     # wandb init
     if accelerator.is_main_process:
@@ -160,12 +157,12 @@ def main():
                 "model_name_or_path": model_name_or_path,
                 "dataset": dataset_dir,
                 "batch_size": batch_size,
-                "mini_batch_size": mini_batch_size,
+                "mini_batch_size": args.mini_batch_size,
                 "num_epochs": num_epochs,
                 "learning_rate": learning_rate,
-                "group_num": group_num,
+                "group_num": args.group_num,
                 "gradient_accumulation_steps": gradient_accumulation_steps,
-                "max_grad_norm": max_grad_norm,
+                "max_grad_norm": args.max_grad_norm,
                 "seed": seed,
                 "wandb_dir": wandb_dir,
             }
@@ -209,7 +206,7 @@ def main():
     
     # optimizer & lr_scheduler
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    num_training_steps = num_epochs * len(dataloader) * (batch_size // mini_batch_size) // gradient_accumulation_steps
+    num_training_steps = num_epochs * len(dataloader) * (batch_size // args.mini_batch_size) // gradient_accumulation_steps
     lr_scheduler = get_linear_schedule_with_warmup(optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps)
     
     # resume training state from checkpoint
@@ -232,7 +229,7 @@ def main():
         model, optimizer, dataloader, lr_scheduler, ref_model)
     
     trainer = GRPOTrainer(
-        config=config,
+        args=args,
         model=model,
         ref_model=ref_model,
         tokenizer=tokenizer,
@@ -274,7 +271,7 @@ def main():
                 "eos_token_id": tokenizer.eos_token_id,
                 "use_cache": True,
                 "num_beams": 1,
-                "num_return_sequences": group_num,
+                "num_return_sequences": args.group_num,
             }
             completions = trainer.generate(
                 prompt_ids,
@@ -290,7 +287,7 @@ def main():
             for key in reward_kwargs:
                 for example in batch[key]:
                     # Repeat each value in the column for `num_generations` times
-                    reward_kwargs[key].extend([example] * config.group_num)
+                    reward_kwargs[key].extend([example] * args.group_num)
                     
             # call reward funcs
             all_rewards = []
@@ -306,7 +303,7 @@ def main():
                 metrics[f"rewards/{reward_func_name}"] = reward_per_func[i].item()
                 
             # expand prompt_ids, align with length of completions
-            prompt_ids = prompt_ids.unsqueeze(1).expand(-1, config.group_num, -1).reshape(-1, prompt_ids.size(-1))
+            prompt_ids = prompt_ids.unsqueeze(1).expand(-1, args.group_num, -1).reshape(-1, prompt_ids.size(-1))
             reward_all_funcs = torch.tensor(reward_all_funcs, device=accelerator.device)
             
             # grpo step

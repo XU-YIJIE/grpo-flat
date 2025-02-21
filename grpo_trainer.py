@@ -1,3 +1,6 @@
+import argparse
+import os
+import requests
 import torch
 import torch.nn.functional as F
 from typing import List, Optional, Union
@@ -11,8 +14,6 @@ import json
 from typing import Callable
 from loguru import logger
 
-from grpo_config import GRPOConfig
-
 
 def expand_indice(input_tensor: torch.Tensor, group_num: int) -> torch.Tensor:
     result = []
@@ -25,16 +26,19 @@ def expand_indice(input_tensor: torch.Tensor, group_num: int) -> torch.Tensor:
 
 class GRPOTrainer:
     def __init__(
-        self,
-        config: GRPOConfig,
-        model,
-        ref_model,
-        tokenizer: PreTrainedTokenizer,
-        optimizer,
-        lr_scheduler,
-        accelerator: Accelerator,
+        self, args: argparse.Namespace, model, ref_model, tokenizer, optimizer, lr_scheduler, accelerator: Accelerator
     ):
-        self.config = config
+        self.args = args
+        
+        # grpo
+        self.group_num = args.group_num
+        self.mini_batch_size = args.mini_batch_size
+        self.beta = args.beta
+        self.cliprange = args.cliprange
+        self.max_grad_norm = args.max_grad_norm
+        self.ref_model_url = args.ref_model_url
+        self.ref_from_remote = args.ref_from_remote
+        
         self.model = model
         self.ref_model = ref_model
         self.tokenizer = tokenizer
@@ -43,6 +47,7 @@ class GRPOTrainer:
         
         self.accelerator = accelerator
         self.current_device = self.accelerator.device
+        
 
     def get_per_token_logps(self, model, input_ids, num_logits_to_keep):
         # We add 1 to `num_logits_to_keep` because the last logits of the sequence is later excluded
@@ -63,22 +68,37 @@ class GRPOTrainer:
         model,
         prompt_ids: torch.Tensor,  # 输入padding后的
         completion_ids: torch.Tensor,  # 输入padding后的
+        from_remote: bool = False,
     ):
-        batch_size = prompt_ids.shape[0] // self.config.group_num
-        mini_batch_size = self.config.mini_batch_size
+        batch_size = prompt_ids.shape[0] // self.group_num
         all_logprobs = []
         
-        for i in range(0, batch_size, mini_batch_size):
-            mini_prompt_ids = prompt_ids[i * self.config.group_num: (i + mini_batch_size) * self.config.group_num]
-            mini_completion_ids = completion_ids[i * self.config.group_num: (i + mini_batch_size) * self.config.group_num]
+        for i in range(0, batch_size, self.mini_batch_size):
+            mini_prompt_ids = prompt_ids[i * self.group_num: (i + self.mini_batch_size) * self.group_num]
+            mini_completion_ids = completion_ids[i * self.group_num: (i + self.mini_batch_size) * self.group_num]
             input_ids = torch.cat([mini_prompt_ids, mini_completion_ids], dim=1)
-            logprobs = self.get_per_token_logps(model, input_ids, num_logits_to_keep=completion_ids.shape[1])  # (mini_batch_size * group_num, seq_len)
+            if not from_remote:
+                logprobs = self.get_per_token_logps(model, input_ids, num_logits_to_keep=completion_ids.shape[1])  # (mini_batch_size * group_num, seq_len)
+            else:
+                logprobs = self.get_logps_from_remote_model(input_ids, num_logits_to_keep=completion_ids.shape[1])
             all_logprobs.append(logprobs)
             
             del input_ids, logprobs, mini_prompt_ids, mini_completion_ids
             torch.cuda.empty_cache()
             
         return torch.cat(all_logprobs)
+        
+    def get_logps_from_remote_model(self, input_ids, num_logits_to_keep):
+        os.environ["http_proxy"] = ""
+        response = requests.post(
+            self.ref_model_url,
+            json={"input_ids": input_ids.cpu().numpy().tolist(),
+                  "num_logits_to_keep": num_logits_to_keep})
+        os.environ["http_proxy"] = "http://host.docker.internal:7890"
+        if response.status_code == 200:
+            return torch.tensor(response.json()["log_probs"]).to(self.current_device)
+        else:
+            raise Exception(f"Error: {response.text}")
 
     def grpo_advantage(self, rewards: torch.FloatTensor, epsilon: float = 1e-4):
         rewards = rewards.to(torch.float32)
@@ -99,22 +119,22 @@ class GRPOTrainer:
         """
         self.model.train()
         
-        batch_size = prompt_ids.shape[0] // self.config.group_num
+        batch_size = prompt_ids.shape[0] // self.group_num
         completions_mask = completion_ids != self.tokenizer.pad_token_id
         advantages = self.grpo_advantage(reward_scores)  # (group_num * batch_size)
         
         old_logprobs = self.get_all_logprobs(self.model, prompt_ids, completion_ids)  
         # (group_num * batch_size, completion_len)
-        ref_logprobs = self.get_all_logprobs(self.ref_model, prompt_ids, completion_ids)  
+        ref_logprobs = self.get_all_logprobs(self.ref_model, prompt_ids, completion_ids, from_remote=self.ref_from_remote)
 
         batch_indice = torch.arange(batch_size)
-        for mini_batch_start in range(0, batch_size, self.config.mini_batch_size):
-            mini_batch_end = mini_batch_start + self.config.mini_batch_size
+        for mini_batch_start in range(0, batch_size, self.mini_batch_size):
+            mini_batch_end = mini_batch_start + self.mini_batch_size
             mini_batch_inds = batch_indice[mini_batch_start:mini_batch_end]
-            mini_batch_inds = expand_indice(mini_batch_inds, self.config.group_num)
+            mini_batch_inds = expand_indice(mini_batch_inds, self.group_num)
             
-            # start = mini_batch_start * self.config.group_num
-            # end = (start + self.config.mini_batch_size) * self.config.group_num
+            # start = mini_batch_start * self.group_num
+            # end = (start + self.mini_batch_size) * self.group_num
 
             mini_prompt_ids, mini_completion_ids, mini_old_logprobs, mini_ref_logprobs, mini_completions_mask, mini_advantages = prompt_ids[mini_batch_inds], completion_ids[mini_batch_inds], old_logprobs[mini_batch_inds], ref_logprobs[mini_batch_inds], completions_mask[mini_batch_inds], advantages[mini_batch_inds]  # mini_old_logprobs: group_num * mini_batch_size, completion_len
             
@@ -125,20 +145,20 @@ class GRPOTrainer:
                 ratio = torch.exp(new_logprobs - mini_old_logprobs.detach())
                 del mini_old_logprobs
                 
-                ratio_clip = torch.clamp(ratio, 1 - self.config.cliprange, 1 + self.config.cliprange)
+                ratio_clip = torch.clamp(ratio, 1 - self.cliprange, 1 + self.cliprange)
                 pg_loss = torch.min(mini_advantages.unsqueeze(dim=1) * ratio, mini_advantages.unsqueeze(dim=1) * ratio_clip)
                 # pg_loss = mini_advantages.unsqueeze(dim=1) * ratio
                 del mini_advantages
                 
                 unbiased_kl = torch.exp(mini_ref_logprobs - new_logprobs) - (mini_ref_logprobs - new_logprobs) - 1
                 
-                pg_loss = - pg_loss + self.config.beta * unbiased_kl
+                pg_loss = - pg_loss + self.beta * unbiased_kl
                 loss = ((pg_loss * mini_completions_mask).sum(dim=1) / mini_completions_mask.sum(dim=1)).mean()
                 del mini_completions_mask, unbiased_kl
                 
                 self.accelerator.backward(loss)
-                if self.config.max_grad_norm is not None:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
+                if self.max_grad_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
                     
                 self.optimizer.step()
                 self.lr_scheduler.step()
@@ -150,9 +170,10 @@ class GRPOTrainer:
         **generation_kwargs
     ):  
         unwrapped_model = self.accelerator.unwrap_model(self.model).eval()
-        outputs = unwrapped_model.generate(
-            input_ids=prompt_tensor,
-            **generation_kwargs
-        )
+        with torch.inference_mode():
+            outputs = unwrapped_model.generate(
+                input_ids=prompt_tensor,
+                **generation_kwargs
+            )
         del unwrapped_model
         return outputs

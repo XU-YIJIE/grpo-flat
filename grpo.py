@@ -6,7 +6,7 @@ from transformers import (
     PreTrainedTokenizer,
     BitsAndBytesConfig,
 )
-from grpo_trainer import GRPOTrainer, GRPOConfig
+from grpo_trainer import GRPOTrainer
 from reward_funcs import (
     perplexity_reward,
     repetition_reward,
@@ -41,9 +41,9 @@ logger.add(
     filter=lambda record: record["level"].name in ["INFO", "ERROR"]
 )
 
-# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-# os.environ["NCCL_P2P_DISABLE"] = "1"
-# os.environ["NCCL_IB_DISABLE"] = "1"
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+os.environ["NCCL_P2P_DISABLE"] = "1"
+os.environ["NCCL_IB_DISABLE"] = "1"
 
 def preprocess_rl_dataset_v1(
     examples: Dict[str, List[Any]], 
@@ -101,6 +101,8 @@ def count_parameters(model):
 
 class Trainer:
     def __init__(self, args: argparse.Namespace):
+        self.args = args
+        
         # data
         self.dataset_dir = args.dataset_dir
         self.preprocessing_num_workers = args.preprocessing_num_workers
@@ -123,8 +125,13 @@ class Trainer:
         self.log_steps = args.log_steps
         self.save_steps = args.save_steps
         self.max_save = args.max_save
+        
+        # grpo
         self.group_num = args.group_num
         self.mini_batch_size = args.mini_batch_size
+        self.beta = args.beta
+        self.cliprange = args.cliprange
+        self.ref_from_remote = args.ref_from_remote
         
         # peft
         self.use_peft = args.use_peft
@@ -138,14 +145,6 @@ class Trainer:
         self.wandb_project = args.wandb_project
         self.wandb_run_name = args.wandb_run_name or f"{args.wandb_project.split('/')[-1]}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.wandb_dir = args.wandb_dir or f"./wandb/{self.wandb_run_name}"
-        
-        # config
-        self.grpo_config = GRPOConfig(
-            group_num=self.group_num,
-            mini_batch_size=self.mini_batch_size,
-            gradient_accumulation_steps=self.gradient_accumulation_steps,
-            max_grad_norm=self.max_grad_norm,
-        )
         
         self.accelerator = Accelerator(
             gradient_accumulation_steps=self.gradient_accumulation_steps,
@@ -247,10 +246,13 @@ class Trainer:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         
-        # Reference model
-        self.ref_model = AutoModelForCausalLM.from_pretrained(**kwargs)
-        for param in self.ref_model.parameters():
-            param.requires_grad = False
+        if self.ref_from_remote:
+            # Reference model
+            self.ref_model = AutoModelForCausalLM.from_pretrained(**kwargs)
+            for param in self.ref_model.parameters():
+                param.requires_grad = False
+        else:
+            self.ref_model = None
         
         self.create_dataloader()
         self.create_optimizer()
@@ -258,7 +260,7 @@ class Trainer:
         self.model, self.optimizer, self.train_dataloader, self.lr_scheduler, self.ref_model = self.accelerator.prepare(self.model, self.optimizer, self.train_dataloader, self.lr_scheduler, self.ref_model)
         
         self.grpo_trainer = GRPOTrainer(
-            config=self.grpo_config,
+            args=self.args,
             model=self.model,
             ref_model=self.ref_model,
             tokenizer=self.tokenizer,
@@ -491,29 +493,29 @@ class Trainer:
 if __name__ == "__main__":
     args = parse_args()
     
-    # # Override some arguments for GRPO training
-    # args.model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"
-    # args.learning_rate = 1e-6
-    # args.batch_size = 2
-    # args.gradient_accumulation_steps = 1
-    # args.num_epochs = 300
-    # args.log_steps = 1
-    # args.save_steps = 10
-    # args.max_grad_norm = 1
-    # args.max_save = 3
-    # args.wandb_project = "grpo_training"
+    # Override some arguments for GRPO training
+    args.model_name_or_path = "lm_models/Qwen2.5-0.5B-Instruct"
+    args.learning_rate = 1e-6
+    args.batch_size = 2
+    args.gradient_accumulation_steps = 1
+    args.num_epochs = 300
+    args.log_steps = 1
+    args.save_steps = 10
+    args.max_grad_norm = 1
+    args.max_save = 3
+    args.wandb_project = "grpo_training"
     
-    # args.group_num = 8
-    # args.mini_batch_size = 1
+    args.group_num = 8
+    args.mini_batch_size = 1
     
-    # args.use_peft = True
-    # args.lora_rank = 16
-    # args.lora_alpha = 16
-    # args.lora_dropout = 0.1
+    args.use_peft = True
+    args.lora_rank = 16
+    args.lora_alpha = 16
+    args.lora_dropout = 0.1
     # args.use_8bit = True
-    # # args.use_4bit = True
-    # # args.qlora = True
-    # args.target_modules = "q_proj,v_proj,lm_head"
+    # args.use_4bit = True
+    # args.qlora = True
+    args.target_modules = "q_proj,v_proj,lm_head"
     
     trainer = Trainer(args)
     trainer.train()

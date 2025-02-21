@@ -10,6 +10,7 @@ def parse_args():
     parser.add_argument("--template", type=str, default="qwen", help="template")
     parser.add_argument("--cutoff_len", type=int, default=1024, help="cutoff_len")
     parser.add_argument("--preprocessing_num_workers", type=int, default=8, help="preprocessing_num_workers")
+    
     # model
     parser.add_argument("--model_name_or_path", type=str, default="lm_models/Qwen2.5-0.5B-Instruct", help="model_name_or_path")
     parser.add_argument("--tokenizer_name_or_path", type=str, default="lm_models/Qwen2.5-0.5B-Instruct", help="tokenizer_name_or_path")
@@ -43,6 +44,10 @@ def parse_args():
     # grpo
     parser.add_argument("--group_num", type=int, default=8, help="group_num")
     parser.add_argument("--mini_batch_size", type=int, default=1, help="mini_batch_size")
+    parser.add_argument("--beta", type=float, default=0.01, help="beta")
+    parser.add_argument("--cliprange", type=float, default=0.2, help="cliprange")
+    parser.add_argument("--ref_model_url", type=str, default="http://localhost:8000/predict", help="ref_model_url")
+    parser.add_argument("--ref_from_remote", type=bool, default=False, help="if to use remote ref_model")
     
     # optimizer 
     parser.add_argument("--num_warmup_steps", type=int, default=0, help="learning rate warmup steps")
