@@ -89,12 +89,10 @@ class GRPOTrainer:
         return torch.cat(all_logprobs)
         
     def get_logps_from_remote_model(self, input_ids, num_logits_to_keep):
-        os.environ["http_proxy"] = ""
         response = requests.post(
             self.ref_model_url,
             json={"input_ids": input_ids.cpu().numpy().tolist(),
                   "num_logits_to_keep": num_logits_to_keep})
-        os.environ["http_proxy"] = "http://host.docker.internal:7890"
         if response.status_code == 200:
             return torch.tensor(response.json()["log_probs"]).to(self.current_device)
         else:
