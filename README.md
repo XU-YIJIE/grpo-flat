@@ -4,7 +4,7 @@
 
 
 ## 📢 News
-[2025/02/21]  Split policy_model ref_model, serve your ref_model separately
+[2025/02/21]  policy_model/ref_model splitted, serve your ref_model separately
 
 [2025/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
 
