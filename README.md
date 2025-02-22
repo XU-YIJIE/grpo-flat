@@ -53,7 +53,6 @@ grpo-flat/
 
 ### Setup with requirements.txt
 ```bash
-git clone https://github.com/xyj787890/grpo-flat.git
 conda create -n grpo-flat python=3.10
 pip install -r requirements.txt
 ```
