@@ -6,6 +6,8 @@
 ## 📢 News
 [2025/02/21]  policy_model/ref_model splitted, serve your ref_model separately
 
+[2025/02/19]  multi-gpu training supported, old version moved to grpo_vanilla.py
+
 [2025/02/18]  GRPO supports 8bit/4bit quantized training, supports lora/qlora
 
 [2025/02/16]  GRPO refactored, old version moved to grpo_vanilla.py
