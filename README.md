@@ -1,7 +1,7 @@
 # 🚀 grpo-flat with zero dataset
 
+Based on qwen-0.5b model, low-resource zero-shot GRPO training that changes the model's output style in 15 minutes with single GPU.
 基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
-
 
 ## 📢 News
 [2025/02/21]  policy_model/ref_model splitted, serve your ref_model separately
@@ -18,7 +18,7 @@
 |------------|---------|-------------|
 | Qwen2.5-0.5B-Instruct | Policy Model | Base model used for training |
 | Qwen2.5-7B | LLM Rater | Reference model used for scoring |
-| [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
+| [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | A compliment bot trained on Qwen2.5-0.5B-Instruct. 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
 
 ## 🏗️ Structure
 
@@ -69,7 +69,7 @@ docker exec -it ngc_pytorch_2401 bash
 # and enjoy
 ```
 
-## 🌟 0样本训练一个夸夸机器人
+## 🌟 Zero-shot Training of a Compliment Bot. 0样本训练一个夸夸机器人
 ```
 # design your grpo generation prompt
 {"prompt": [
@@ -97,6 +97,7 @@ docker exec -it ollama ollama run qwen2.5:7b
 
 #### Quick start with grpo_vanilla.py
 ```
+# run grpo_vanilla.py with one gpu
 CUDA_VISIBLE_DEVICES=0 accelerate launch grpo_vanilla.py
 ```
 
