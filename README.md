@@ -17,7 +17,7 @@ Based on qwen-0.5b model, low-resource zero-shot GRPO training that changes the 
 | Model Name | Purpose | Description |
 |------------|---------|-------------|
 | Qwen2.5-0.5B-Instruct | Policy Model | Base model used for training |
-| Qwen2.5-7B | LLM Rater | Reference model used for scoring |
+| Qwen2.5-7B | LLM Rater | Prompt based reward model used for scoring |
 | [xyj787878/Qwen2.5-0.5B-GRPO-kuakua](https://huggingface.co/xyj787878/Qwen2.5-0.5B-GRPO-kuakua) | Trained Model | A compliment bot trained on Qwen2.5-0.5B-Instruct. 基于Qwen2.5-0.5B-Instruct训练的夸夸机器人 |
 
 ## 🏗️ Structure
