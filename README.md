@@ -187,8 +187,10 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch grpo.py \
     --use_4bit True \
     --qlora True \
     --target_modules "q_proj,v_proj,lm_head"
+```
 
-# train policy model with multiple gpus if you have ...
+#### train policy model with multiple gpus if you have ...
+```
 CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch grpo.py \
     --model_name_or_path "lm_models/Qwen2.5-0.5B-Instruct" \
     --num_epochs 300 \
