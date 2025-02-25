@@ -4,7 +4,7 @@ Based on qwen-0.5b model, low-resource zero-shot GRPO training that changes the 
 基于qwen-0.5b模型，低资源0样本grpo训练，单卡训练15分钟改变原模型输出风格
 
 ## 📢 News
-[2025/02/21]  policy_model/ref_model splitted, serve your ref_model separately
+[2025/02/21]  policy_model/ref_model splitted, serve your ref_model separately with ref_fastapi.py
 
 [2025/02/19]  multi-gpu training supported, old version moved to grpo_vanilla.py
 
