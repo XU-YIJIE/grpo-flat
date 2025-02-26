@@ -114,6 +114,7 @@ class Trainer:
         self.use_4bit = args.use_4bit
         self.torch_dtype = args.torch_dtype
         self.device = args.device
+        self.model_out_dir = args.model_out_dir
         
         # training
         self.num_epochs = args.num_epochs
@@ -322,7 +323,7 @@ class Trainer:
         self.lr_scheduler = get_linear_schedule_with_warmup(optimizer=self.optimizer, num_warmup_steps=self.num_warmup_steps, num_training_steps=max_train_steps)
 
     def save_manager(self, current_epoch, current_steps, current_reward, max_save=None, prefix=None):
-        checkpoints_dir = f"checkpoints/{self.wandb_run_name}"
+        checkpoints_dir = f"{self.model_out_dir}/{self.wandb_run_name}"
         if not os.path.exists(checkpoints_dir):
             os.makedirs(checkpoints_dir)
         

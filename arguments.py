@@ -7,8 +7,6 @@ def parse_args():
     parser.add_argument("--input_jsonl", type=list, default=None, help="input_jsonl")
     parser.add_argument("--dataset_dir", type=str, default="dataset/sharegpt_gpt4", help="dataset_dir")
     parser.add_argument("--dataset_name", type=str, default="sharegpt_gpt4", help="dataset_name")
-    parser.add_argument("--template", type=str, default="qwen", help="template")
-    parser.add_argument("--cutoff_len", type=int, default=1024, help="cutoff_len")
     parser.add_argument("--preprocessing_num_workers", type=int, default=8, help="preprocessing_num_workers")
     
     # model
@@ -18,8 +16,7 @@ def parse_args():
     parser.add_argument("--use_4bit", type=bool, default=False, help="use_4bit")
     parser.add_argument("--torch_dtype", type=str, default="float16", help="torch_dtype", choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--model_tag", type=str, default=None, help="model_tag")
-    parser.add_argument("--from_scratch", type=bool, default=True, help="if to train from scratch")
-    parser.add_argument("--model_out_dir", type=str, default="model_ckpts", help="model_out_dir")
+    parser.add_argument("--model_out_dir", type=str, default="checkpoints", help="model_out_dir")
     parser.add_argument("--max_save", type=int, default=3, help="max save checkpoints")
     parser.add_argument("--device", type=str, default="cuda", help="device")
     
@@ -52,9 +49,6 @@ def parse_args():
     # optimizer 
     parser.add_argument("--num_warmup_steps", type=int, default=0, help="learning rate warmup steps")
     parser.add_argument("--weight_decay", type=float, default=0.01, help="optimizer weight decay")
-    parser.add_argument("--adam_beta1", type=float, default=0.9, help="adam beta1")
-    parser.add_argument("--adam_beta2", type=float, default=0.999, help="adam beta2")
-    parser.add_argument("--adam_epsilon", type=float, default=1e-8, help="adam epsilon")
     
     # logging
     parser.add_argument("--wandb_project", type=str, default="sft_training", help="wandb project name")
