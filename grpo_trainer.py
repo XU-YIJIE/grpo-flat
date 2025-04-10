@@ -100,9 +100,12 @@ class GRPOTrainer:
 
     def grpo_advantage(self, rewards: torch.FloatTensor, epsilon: float = 1e-4):
         rewards = rewards.to(torch.float32)
-        mean = rewards.mean(dim=0, keepdim=True)
-        std = rewards.std(dim=0, keepdim=True)
-        advantages = (rewards - mean) / (std + epsilon)
+        batch_size = rewards.shape[0] // self.group_num
+        rewards_grouped = rewards.view(batch_size, self.group_num)
+        mean = rewards_grouped.mean(dim=1, keepdim=True)  # [batch_size, 1]
+        std = rewards_grouped.std(dim=1, keepdim=True)    # [batch_size, 1]
+        advantages_grouped = (rewards_grouped - mean) / (std + epsilon)
+        advantages = advantages_grouped.view(-1)
         return advantages
 
     def step(
