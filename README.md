@@ -255,7 +255,7 @@ If you use this code in your research or project, please cite it as follows:
   year = {2025},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/xyj787890/grpo-flat}},
+  howpublished = {\url{https://github.com/XU-YIJIE/grpo-flat}},
   note = {A zero-shot GRPO training implementation based on Qwen2.5-0.5B model}
 }
 ```
